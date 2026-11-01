@@ -1,213 +1,249 @@
+Berikut adalah versi komplit **`index.html`** yang sudah terintegrasi penuh. Semua kode JavaScript (termasuk pemanggilan data dari Apps Script, logika kalkulasi *Cargo Loaded*, serta grafik `updateCharts` dengan batas spesifikasi kontrak) sudah disatukan ke dalam satu dokumen HTML.
+
+Silakan *copy* dan ganti seluruh isi `index.html` Anda dengan kode di bawah ini:
+
+```html
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PT Sandai Kemakmuran Utama - Dashboard Barging & Quality Control</title>
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- SheetJS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- html2canvas CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #ffffff; }
-        .table-container::-webkit-scrollbar,
-        .mobile-scroll::-webkit-scrollbar { height: 6px; }
-        .table-container::-webkit-scrollbar-thumb,
-        .mobile-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
-        @media print {
-            .no-print { display: none !important; }
-            body { background-color: white; }
-            .shadow-sm, .shadow-xl { box-shadow: none !important; }
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .table-container::-webkit-scrollbar { height: 6px; }
+        .table-container::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
-<body class="text-slate-800 bg-white antialiased">
+<body class="text-slate-800 antialiased">
 
-    <!-- Header Navbar Responsif Mobile -->
-    <header class="bg-slate-900 text-white border-b border-slate-700 sticky top-0 z-40 no-print">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 sm:h-16 gap-3">
-                <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
-                    <div class="flex items-center space-x-3">
-                        <div class="bg-blue-600 p-2 text-white shrink-0">
-                            <i class="fa-solid fa-ship text-lg sm:text-xl"></i>
-                        </div>
-                        <div>
-                            <h1 class="font-bold text-sm sm:text-lg leading-tight tracking-wide">PT SANDAI KEMAKMURAN UTAMA</h1>
-                            <p class="text-[10px] sm:text-xs text-slate-400">Barging & Quality Control Operations Dashboard</p>
-                        </div>
-                    </div>
+    <!-- Header -->
+    <header class="bg-slate-900 text-white sticky top-0 z-40">
+        <div class="max-w-[1400px] mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 p-2 text-white"><i class="fa-solid fa-ship text-xl"></i></div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide">PT SANDAI KEMAKMURAN UTAMA</h1>
+                    <p class="text-xs text-slate-400">Barging Operations & Quality Control Dashboard</p>
                 </div>
+            </div>
 
-                <!-- Action Toolbar Buttons -->
-                <div class="flex items-center space-x-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 mobile-scroll shrink-0">
-                    <button id="refreshBtn" onclick="fetchFromGAS()" class="bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
-                        <i id="refreshIcon" class="fa-solid fa-rotate"></i> <span id="refreshText">Refresh Data</span>
-                    </button>
-
-                    <button id="uploadBtn" onclick="manualUploadToSheet()" class="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
-                        <i id="uploadIcon" class="fa-solid fa-cloud-arrow-up"></i> <span id="uploadText">Upload ke Sheet</span>
-                    </button>
-
-                    <a href="https://docs.google.com/spreadsheets/d/1dwZ7zI8fjxy5s1KODFjNMdHJFFsuhAYzEXLZLEAiNgo/edit" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
-                        <i class="fa-solid fa-file-excel"></i> Buka Sheet
-                    </a>
-
-                    <button onclick="exportExcel()" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
-                        <i class="fa-solid fa-file-export"></i> Export Excel
-                    </button>
-
-                    <button onclick="saveAsImage()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
-                        <i class="fa-solid fa-image"></i> Simpan Gambar
-                    </button>
-
-                    <button onclick="window.print()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
-                        <i class="fa-solid fa-print"></i> Cetak
-                    </button>
-
-                    <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-2.5 sm:px-3 py-1.5 sm:py-2 transition flex items-center gap-1.5 whitespace-nowrap">
-                        <i class="fa-solid fa-plus"></i> Input Baru
-                    </button>
-                </div>
+            <!-- Toolbar Buttons -->
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="fetchFromGAS()" class="bg-sky-600 hover:bg-sky-700 text-white text-xs font-medium px-3 py-2 flex items-center gap-1.5 shadow-sm transition">
+                    <i id="refreshIcon" class="fa-solid fa-rotate"></i> <span id="refreshText">Refresh Data</span>
+                </button>
+                <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-2 flex items-center gap-1.5 shadow-sm transition">
+                    <i class="fa-solid fa-plus"></i> Input Baru
+                </button>
+                <button onclick="exportExcel()" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium px-3 py-2 flex items-center gap-1.5 shadow-sm transition">
+                    <i class="fa-solid fa-file-export"></i> Export
+                </button>
             </div>
         </div>
     </header>
 
-    <main id="capture-area" class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 bg-white">
-
-        <!-- KPI Summary Cards -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div class="bg-white p-4 sm:p-5 border border-slate-300">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Total Shipment</p>
-                        <h3 class="text-xl sm:text-2xl font-bold mt-1 text-slate-900" id="stat-total">0</h3>
-                    </div>
-                    <div class="p-2 sm:p-2.5 bg-blue-50 text-blue-600">
-                        <i class="fa-solid fa-anchor text-base sm:text-lg"></i>
-                    </div>
-                </div>
+    <main id="capture-area" class="max-w-[1400px] mx-auto px-4 py-6 space-y-6">
+        
+        <!-- KPI Cards -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 border border-slate-200 shadow-sm border-l-4 border-l-blue-500">
+                <p class="text-[11px] font-semibold uppercase text-slate-500">Total Shipment</p>
+                <h3 class="text-2xl font-bold mt-1 text-slate-800" id="stat-total">0</h3>
             </div>
-
-            <div class="bg-white p-4 sm:p-5 border border-slate-300">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Total Tonase Final</p>
-                        <h3 class="text-xl sm:text-2xl font-bold mt-1 text-slate-900" id="stat-tonnage">0 <span class="text-xs font-normal text-slate-500">MT</span></h3>
-                    </div>
-                    <div class="p-2 sm:p-2.5 bg-emerald-50 text-emerald-600">
-                        <i class="fa-solid fa-weight-hanging text-base sm:text-lg"></i>
-                    </div>
-                </div>
+            <div class="bg-white p-5 border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+                <p class="text-[11px] font-semibold uppercase text-slate-500">Cargo Loaded Final</p>
+                <h3 class="text-2xl font-bold mt-1 text-slate-800" id="stat-tonnage">0 <span class="text-xs font-normal text-slate-500">MT</span></h3>
             </div>
-
-            <div class="bg-white p-4 sm:p-5 border border-slate-300">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Total Ritase Dump Truck</p>
-                        <h3 class="text-xl sm:text-2xl font-bold mt-1 text-slate-900" id="stat-ritase">0</h3>
-                    </div>
-                    <div class="p-2 sm:p-2.5 bg-amber-50 text-amber-600">
-                        <i class="fa-solid fa-truck-monster text-base sm:text-lg"></i>
-                    </div>
-                </div>
+            <div class="bg-white p-5 border border-slate-200 shadow-sm border-l-4 border-l-amber-500">
+                <p class="text-[11px] font-semibold uppercase text-slate-500">Total Ritase Dump Truck</p>
+                <h3 class="text-2xl font-bold mt-1 text-slate-800" id="stat-ritase">0</h3>
             </div>
-
-            <div class="bg-white p-4 sm:p-5 border border-slate-300">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Selesai Berlayar</p>
-                        <h3 class="text-xl sm:text-2xl font-bold mt-1 text-slate-900" id="stat-completed">0</h3>
-                    </div>
-                    <div class="p-2 sm:p-2.5 bg-indigo-50 text-indigo-600">
-                        <i class="fa-solid fa-compass text-base sm:text-lg"></i>
-                    </div>
-                </div>
+            <div class="bg-white p-5 border border-slate-200 shadow-sm border-l-4 border-l-indigo-500">
+                <p class="text-[11px] font-semibold uppercase text-slate-500">Selesai / Berlayar</p>
+                <h3 class="text-2xl font-bold mt-1 text-slate-800" id="stat-completed">0</h3>
             </div>
         </section>
 
-        <!-- Grafik Tonase & COA -->
-        <section class="bg-white p-4 sm:p-5 border border-slate-300 space-y-3 sm:space-y-4">
-            <h2 class="font-bold text-slate-800 text-base sm:text-lg">Grafik Tonase Final Draft Barging</h2>
-            <div class="relative w-full h-64 sm:h-80"><canvas id="draftChart"></canvas></div>
+        <!-- Charts -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="bg-white p-4 border border-slate-200 shadow-sm">
+                <h2 class="font-bold text-slate-800 text-sm mb-3">Grafik Cargo Loaded (MT)</h2>
+                <div class="relative w-full h-80"><canvas id="draftChart"></canvas></div>
+            </div>
+            <div class="bg-white p-4 border border-slate-200 shadow-sm">
+                <h2 class="font-bold text-slate-800 text-sm mb-3">Analisis COA Kimia (%)</h2>
+                <div class="relative w-full h-80"><canvas id="coaChart"></canvas></div>
+            </div>
         </section>
 
-        <section class="bg-white p-4 sm:p-5 border border-slate-300 space-y-3 sm:space-y-4">
-            <h2 class="font-bold text-slate-800 text-base sm:text-lg">Grafik Analisis Kualitas COA Kimia (%)</h2>
-            <div class="relative w-full h-64 sm:h-80"><canvas id="coaChart"></canvas></div>
-        </section>
-
-        <!-- Tabel Log Data -->
-        <section class="bg-white border border-slate-300 overflow-hidden">
-            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200">
-                <h2 class="font-bold text-slate-800 text-sm sm:text-base">Log Data Barging & Pengapalan SKU</h2>
+        <!-- Log Data Table -->
+        <section class="bg-white border border-slate-200 shadow-sm">
+            <div class="px-4 py-3 border-b border-slate-200 bg-slate-50">
+                <h2 class="font-bold text-slate-800 text-sm">Log Data Operasional & Kualitas</h2>
             </div>
             <div class="overflow-x-auto table-container">
                 <table class="w-full text-xs text-left border-collapse" id="bargingTable">
-                    <thead class="bg-slate-800 text-white uppercase text-[10px] sm:text-[11px]">
+                    <thead class="bg-slate-800 text-white uppercase text-[10px]">
                         <tr>
-                            <th class="py-3 px-3 text-center border-r border-slate-700" rowspan="2">No. Ship</th>
-                            <th class="py-3 px-3 border-r border-slate-700" rowspan="2">Nama TB / Nama Tongkang</th>
-                            <th class="py-3 px-3 text-center border-r border-slate-700" rowspan="2">Cap. (ft)</th>
-                            <th class="py-3 px-3 border-r border-slate-700" rowspan="2">Tambat Tali</th>
-                            <th class="py-3 px-3 text-right border-r border-slate-700" rowspan="2">Draft Final</th>
-                            <th class="py-3 px-3 text-center border-r border-slate-700" rowspan="2">Ritase DT</th>
+                            <th class="py-3 px-3 text-center border-r border-slate-700" rowspan="2">No</th>
+                            <th class="py-3 px-3 border-r border-slate-700 min-w-[150px]" rowspan="2">Tongkang</th>
+                            <th class="py-3 px-3 border-r border-slate-700 min-w-[120px]" rowspan="2">Tambat Tali</th>
+                            <th class="py-3 px-3 text-right border-r border-slate-700" rowspan="2">Net Inisial</th>
+                            <th class="py-3 px-3 text-right border-r border-slate-700" rowspan="2">Net Final</th>
+                            <th class="py-3 px-3 text-right border-r border-slate-700 bg-emerald-900/40" rowspan="2">Cargo (MT)</th>
+                            <th class="py-3 px-3 text-center border-r border-slate-700" rowspan="2">Ritase</th>
                             <th class="py-2 px-3 text-center border-r border-slate-700 bg-indigo-900/40" colspan="3">COA BARGING (%)</th>
                             <th class="py-2 px-3 text-center border-r border-slate-700 bg-cyan-900/40" colspan="3">COA DISCHARGE (%)</th>
-                            <th class="py-3 px-3 text-center border-r border-slate-700" rowspan="2">Status</th>
+                            <th class="py-3 px-3 border-r border-slate-700 min-w-[120px]" rowspan="2">Lepas Tali</th>
+                            <th class="py-3 px-3 border-r border-slate-700 min-w-[120px]" rowspan="2">Keberangkatan</th>
+                            <th class="py-3 px-3 border-r border-slate-700" rowspan="2">Tujuan</th>
                         </tr>
                         <tr>
-                            <th class="py-1 px-2 text-center bg-indigo-900/40">Al₂O₃</th>
-                            <th class="py-1 px-2 text-center bg-indigo-900/40">SiO₂</th>
-                            <th class="py-1 px-2 text-center bg-indigo-900/40">R-SiO₂</th>
-                            <th class="py-1 px-2 text-center bg-cyan-900/40">Al₂O₃</th>
-                            <th class="py-1 px-2 text-center bg-cyan-900/40">SiO₂</th>
-                            <th class="py-1 px-2 text-center bg-cyan-900/40">R-SiO₂</th>
+                            <th class="py-1 px-2 text-center bg-indigo-900/40 border-r border-slate-700">Al₂O₃</th>
+                            <th class="py-1 px-2 text-center bg-indigo-900/40 border-r border-slate-700">SiO₂</th>
+                            <th class="py-1 px-2 text-center bg-indigo-900/40 border-r border-slate-700">R-SiO₂</th>
+                            <th class="py-1 px-2 text-center bg-cyan-900/40 border-r border-slate-700">Al₂O₃</th>
+                            <th class="py-1 px-2 text-center bg-cyan-900/40 border-r border-slate-700">SiO₂</th>
+                            <th class="py-1 px-2 text-center bg-cyan-900/40 border-r border-slate-700">R-SiO₂</th>
                         </tr>
                     </thead>
-                    <tbody id="barging-table-body" class="divide-y divide-slate-200"></tbody>
+                    <tbody id="table-body" class="divide-y divide-slate-200"></tbody>
                 </table>
             </div>
         </section>
     </main>
 
-    <!-- Modal Input -->
-    <div id="shipmentModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="bg-white border border-slate-300 max-w-xl w-full p-6 space-y-4">
-            <h3 class="text-base font-bold text-slate-800">Tambah Data Shipment</h3>
-            <form id="bargingForm" onsubmit="saveShipment(event)" class="space-y-3 text-xs">
-                <input type="number" id="no_shipment" placeholder="No. Shipment" required class="w-full border p-2">
-                <input type="text" id="nama_tb_tongkang" placeholder="Nama TB / Tongkang" required class="w-full border p-2">
-                <div class="grid grid-cols-3 gap-2">
-                    <input type="number" step="0.01" id="coa_barging_al2o3" placeholder="Barging Al2O3" class="border p-2">
-                    <input type="number" step="0.01" id="coa_barging_sio2" placeholder="Barging SiO2" class="border p-2">
-                    <input type="number" step="0.01" id="coa_barging_rsio2" placeholder="Barging R-SiO2" class="border p-2">
-                </div>
-                <div class="grid grid-cols-3 gap-2">
-                    <input type="number" step="0.01" id="coa_discharge_al2o3" placeholder="Discharge Al2O3" class="border p-2">
-                    <input type="number" step="0.01" id="coa_discharge_sio2" placeholder="Discharge SiO2" class="border p-2">
-                    <input type="number" step="0.01" id="coa_discharge_rsio2" placeholder="Discharge R-SiO2" class="border p-2">
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal()" class="px-3 py-1.5 border">Batal</button>
-                    <button type="submit" class="px-3 py-1.5 bg-blue-600 text-white">Simpan & Kirim</button>
-                </div>
-            </form>
+    <!-- Modal Input Baru -->
+    <div id="shipmentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white border border-slate-300 max-w-4xl w-full rounded shadow-xl flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
+                <h3 class="text-base font-bold text-slate-800"><i class="fa-solid fa-file-circle-plus text-blue-600 mr-2"></i>Tambah Data Shipment Presisi</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto">
+                <form id="dataForm" onsubmit="saveShipment(event)" class="space-y-6 text-xs">
+                    
+                    <!-- Detail Pengapalan -->
+                    <div>
+                        <h4 class="font-bold text-slate-700 border-b pb-1 mb-3">1. Identitas & Waktu Pengapalan</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block font-medium mb-1">No. Shipment</label>
+                                <input type="number" id="no_shipment" required class="w-full border border-slate-300 p-2 focus:ring-1 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block font-medium mb-1">Nama TB / Tongkang</label>
+                                <input type="text" id="nama_tb_tongkang" required class="w-full border border-slate-300 p-2 focus:ring-1 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-medium mb-1">Tambat Tali (Tgl & Jam)</label>
+                                <input type="datetime-local" id="tambat_tali" required class="w-full border border-slate-300 p-2 outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detail Displacement -->
+                    <div class="bg-emerald-50/50 p-4 border border-emerald-100 rounded">
+                        <h4 class="font-bold text-emerald-800 border-b border-emerald-200 pb-1 mb-3">2. Net Displacement & Kargo</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block font-medium text-slate-700 mb-1">Net Displacement Initial</label>
+                                <input type="number" step="0.001" id="net_initial" oninput="calcCargo()" required class="w-full border border-slate-300 p-2 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-medium text-slate-700 mb-1">Net Displacement Final</label>
+                                <input type="number" step="0.001" id="net_final" oninput="calcCargo()" required class="w-full border border-slate-300 p-2 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-emerald-700 mb-1">Cargo Loaded (Otomatis)</label>
+                                <input type="number" step="0.001" id="cargo_loaded" readonly class="w-full border border-emerald-300 bg-emerald-100 p-2 font-bold text-emerald-900 outline-none cursor-not-allowed">
+                            </div>
+                            <div>
+                                <label class="block font-medium text-slate-700 mb-1">Ritase DT</label>
+                                <input type="number" id="ritase_dt" class="w-full border border-slate-300 p-2 outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kualitas Kimia -->
+                    <div>
+                        <h4 class="font-bold text-slate-700 border-b pb-1 mb-3">3. Analisis Kualitas (COA)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- COA Barging -->
+                            <div class="p-3 bg-indigo-50/50 border border-indigo-100 rounded">
+                                <span class="font-bold text-indigo-800 block mb-2">COA Barging (%)</span>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div><label class="block mb-1 text-slate-600">Al₂O₃</label><input type="number" step="0.01" id="coa_b_al" class="w-full border p-2"></div>
+                                    <div><label class="block mb-1 text-slate-600">SiO₂</label><input type="number" step="0.01" id="coa_b_si" class="w-full border p-2"></div>
+                                    <div><label class="block mb-1 text-slate-600">R-SiO₂</label><input type="number" step="0.01" id="coa_b_rsi" class="w-full border p-2"></div>
+                                </div>
+                            </div>
+                            <!-- COA Discharge -->
+                            <div class="p-3 bg-cyan-50/50 border border-cyan-100 rounded">
+                                <span class="font-bold text-cyan-800 block mb-2">COA Discharge (%)</span>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div><label class="block mb-1 text-slate-600">Al₂O₃</label><input type="number" step="0.01" id="coa_d_al" class="w-full border p-2"></div>
+                                    <div><label class="block mb-1 text-slate-600">SiO₂</label><input type="number" step="0.01" id="coa_d_si" class="w-full border p-2"></div>
+                                    <div><label class="block mb-1 text-slate-600">R-SiO₂</label><input type="number" step="0.01" id="coa_d_rsi" class="w-full border p-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Waktu Penyelesaian -->
+                    <div>
+                        <h4 class="font-bold text-slate-700 border-b pb-1 mb-3">4. Milestone Keberangkatan</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block font-medium mb-1">Lepas Tali</label>
+                                <input type="datetime-local" id="lepas_tali" class="w-full border border-slate-300 p-2 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-medium mb-1">Keberangkatan</label>
+                                <input type="datetime-local" id="keberangkatan" class="w-full border border-slate-300 p-2 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-medium mb-1">Tujuan</label>
+                                <input type="text" id="tujuan" value="BAP SMELTER" class="w-full border border-slate-300 p-2 outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t bg-slate-50 flex justify-end gap-3 rounded-b">
+                <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-300 text-slate-700 bg-white hover:bg-slate-100 font-medium">Batal</button>
+                <button type="submit" form="dataForm" class="px-5 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 shadow-sm"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>Simpan & Kirim</button>
+            </div>
         </div>
     </div>
 
+    <!-- Script JavaScript Terintegrasi -->
     <script>
-        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxU1ngTBMvfUyQq8hqP-MbFaWxTvXo4EjO-9jJcIRv7IJ57Pmy1ndciJkqVvMAzKdMrUQ/exec";
-        let bargingData = [];
+        // Endpoint Google Apps Script
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbzcwD1-wSdDLFCK9i9kRghnV5V5Z1U3DhKycLGNnCBEvBm-IN93UmDbngozIoDToQ-y8A/exec";
+        let rawData = [];
         let draftChart = null, coaChart = null;
 
+        // Fungsi Kalkulasi Kargo Otomatis di Form
+        function calcCargo() {
+            const initial = parseFloat(document.getElementById('net_initial').value) || 0;
+            const final = parseFloat(document.getElementById('net_final').value) || 0;
+            const cargo = final - initial;
+            document.getElementById('cargo_loaded').value = cargo > 0 ? cargo.toFixed(3) : 0;
+        }
+
+        // Parsing angka aman & Format ke String Indonesia
         function parseNum(val) {
             if (val === null || val === undefined || val === "" || val === "-") return 0;
             if (typeof val === 'number') return val;
@@ -215,106 +251,213 @@
             if (str.indexOf(',') !== -1) str = str.replace(/\./g, '').replace(',', '.');
             return parseFloat(str) || 0;
         }
+        function fmtDec(num) { 
+            const p = parseNum(num); 
+            return p === 0 ? "-" : new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 3 }).format(p); 
+        }
+        
+        // Memformat Datetime ISO ke format tampilan yang lebih rapi (Tgl di atas, Jam di bawah)
+        function fmtDateStr(isoString) {
+            if (!isoString) return "-";
+            return isoString.replace('T', '<br><span class="text-[10px] text-slate-400">') + '</span>';
+        }
 
+        // Ambil Data dari Google Sheets via GAS
         async function fetchFromGAS() {
-            const btn = document.getElementById('refreshBtn'), icon = document.getElementById('refreshIcon'), text = document.getElementById('refreshText');
-            if (btn) btn.disabled = true;
-            if (icon) icon.classList.add('fa-spin');
-            if (text) text.innerText = "Loading...";
+            const icon = document.getElementById('refreshIcon');
+            icon.classList.add('fa-spin');
 
             try {
                 const res = await fetch(DEFAULT_GAS_URL);
-                const raw = await res.json();
-                if (Array.isArray(raw)) {
-                    bargingData = raw.map(i => ({
-                        ...i,
-                        coa_barging_al2o3: parseNum(i.coa_barging_al2o3),
-                        coa_barging_sio2: parseNum(i.coa_barging_sio2),
-                        coa_barging_rsio2: parseNum(i.coa_barging_rsio2),
-                        coa_discharge_al2o3: parseNum(i.coa_discharge_al2o3),
-                        coa_discharge_sio2: parseNum(i.coa_discharge_sio2),
-                        coa_discharge_rsio2: parseNum(i.coa_discharge_rsio2),
-                        draft_final: parseNum(i.draft_final)
-                    }));
+                const fetched = await res.json();
+                if (Array.isArray(fetched)) {
+                    rawData = fetched;
                     renderTable();
                 }
-            } catch (e) {
-                console.error("Fetch error:", e);
-            } finally {
-                if (btn) btn.disabled = false;
-                if (icon) icon.classList.remove('fa-spin');
-                if (text) text.innerText = "Refresh Data";
-            }
+            } catch (e) { console.error("Gagal sinkronisasi", e); }
+            finally { icon.classList.remove('fa-spin'); }
         }
 
-        async function sendToGoogleSheet(itemData) {
-            try {
-                await fetch(DEFAULT_GAS_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(itemData)
-                });
-            } catch (e) { console.error(e); }
-        }
-
+        // Men-generate Tabel dan Menghitung KPI
         function renderTable() {
-            const tbody = document.getElementById('barging-table-body');
+            const tbody = document.getElementById('table-body');
             tbody.innerHTML = '';
-            let totalTonnage = 0, totalRitase = 0, completed = 0;
+            let tCargo = 0, tRitase = 0, cCount = 0;
 
-            bargingData.forEach((item, idx) => {
-                totalTonnage += parseNum(item.draft_final);
-                totalRitase += parseNum(item.ritase_dt);
-                if (item.keberangkatan_tgl) completed++;
+            rawData.forEach((i) => {
+                tCargo += parseNum(i.cargo_loaded);
+                tRitase += parseNum(i.ritase_dt);
+                if (i.keberangkatan) cCount++;
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-blue-50/50">
-                        <td class="py-2 px-3 text-center border-r font-semibold">#${item.no_shipment}</td>
-                        <td class="py-2 px-3 border-r font-medium">${item.nama_tb_tongkang}</td>
-                        <td class="py-2 px-3 text-center border-r">${item.kapasitas || 300}</td>
-                        <td class="py-2 px-3 border-r">${item.tambat_tali_tgl || '-'}</td>
-                        <td class="py-2 px-3 text-right border-r font-bold text-emerald-700">${item.draft_final || '-'}</td>
-                        <td class="py-2 px-3 text-center border-r">${item.ritase_dt || '-'}</td>
-                        <td class="py-2 px-2 text-center border-r text-indigo-700 bg-indigo-50/30">${item.coa_barging_al2o3}%</td>
-                        <td class="py-2 px-2 text-center border-r text-indigo-700 bg-indigo-50/30">${item.coa_barging_sio2}%</td>
-                        <td class="py-2 px-2 text-center border-r text-indigo-700 bg-indigo-50/30">${item.coa_barging_rsio2}%</td>
-                        <td class="py-2 px-2 text-center border-r text-cyan-700 bg-cyan-50/30">${item.coa_discharge_al2o3}%</td>
-                        <td class="py-2 px-2 text-center border-r text-cyan-700 bg-cyan-50/30">${item.coa_discharge_sio2}%</td>
-                        <td class="py-2 px-2 text-center border-r text-cyan-700 bg-cyan-50/30">${item.coa_discharge_rsio2}%</td>
-                        <td class="py-2 px-3 text-center"><span class="px-2 py-0.5 text-[10px] bg-emerald-100 text-emerald-800">Aktif</span></td>
+                    <tr class="hover:bg-blue-50/50 bg-white">
+                        <td class="py-2 px-3 text-center border-r font-semibold text-slate-700">#${i.no_shipment}</td>
+                        <td class="py-2 px-3 border-r font-medium text-slate-800 leading-tight">${i.nama_tb_tongkang}</td>
+                        <td class="py-2 px-3 border-r text-center">${fmtDateStr(i.tambat_tali)}</td>
+                        <td class="py-2 px-3 text-right border-r text-slate-500">${fmtDec(i.net_displacement_initial)}</td>
+                        <td class="py-2 px-3 text-right border-r text-slate-500">${fmtDec(i.net_displacement_final)}</td>
+                        <td class="py-2 px-3 text-right border-r font-bold text-emerald-700 bg-emerald-50/40">${fmtDec(i.cargo_loaded)}</td>
+                        <td class="py-2 px-3 text-center border-r">${i.ritase_dt || '-'}</td>
+                        
+                        <td class="py-2 px-2 text-center border-r text-indigo-700 bg-indigo-50/30 font-medium">${fmtDec(i.coa_barging_al2o3)}%</td>
+                        <td class="py-2 px-2 text-center border-r text-indigo-700 bg-indigo-50/30 font-medium">${fmtDec(i.coa_barging_sio2)}%</td>
+                        <td class="py-2 px-2 text-center border-r text-indigo-700 bg-indigo-50/30 font-medium">${fmtDec(i.coa_barging_rsio2)}%</td>
+                        
+                        <td class="py-2 px-2 text-center border-r text-cyan-700 bg-cyan-50/30 font-medium">${fmtDec(i.coa_discharge_al2o3)}%</td>
+                        <td class="py-2 px-2 text-center border-r text-cyan-700 bg-cyan-50/30 font-medium">${fmtDec(i.coa_discharge_sio2)}%</td>
+                        <td class="py-2 px-2 text-center border-r text-cyan-700 bg-cyan-50/30 font-medium">${fmtDec(i.coa_discharge_rsio2)}%</td>
+                        
+                        <td class="py-2 px-3 border-r text-center">${fmtDateStr(i.lepas_tali)}</td>
+                        <td class="py-2 px-3 border-r text-center">${fmtDateStr(i.keberangkatan)}</td>
+                        <td class="py-2 px-3 text-slate-600">${i.tujuan}</td>
                     </tr>
                 `;
             });
 
-            document.getElementById('stat-total').innerText = bargingData.length;
-            document.getElementById('stat-tonnage').innerText = totalTonnage.toLocaleString();
-            document.getElementById('stat-ritase').innerText = totalRitase;
-            document.getElementById('stat-completed').innerText = completed;
+            document.getElementById('stat-total').innerText = rawData.length;
+            document.getElementById('stat-tonnage').innerHTML = `${tCargo.toLocaleString('id-ID', {maximumFractionDigits:2})} <span class="text-xs font-normal text-slate-500">MT</span>`;
+            document.getElementById('stat-ritase').innerText = tRitase;
+            document.getElementById('stat-completed').innerText = cCount;
+
+            updateCharts();
         }
 
-        function openModal() { document.getElementById('shipmentModal').classList.remove('hidden'); document.getElementById('shipmentModal').classList.add('flex'); }
-        function closeModal() { document.getElementById('shipmentModal').classList.add('hidden'); document.getElementById('shipmentModal').classList.remove('flex'); }
+        // Render Grafik dengan Chart.js
+        function updateCharts() {
+            // 1. Grafik Tonase Final / Cargo Loaded
+            const ctx1 = document.getElementById('draftChart').getContext('2d');
+            if (draftChart) draftChart.destroy();
+            draftChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: rawData.map(i => `#${i.no_shipment}`),
+                    datasets: [{ 
+                        label: 'Cargo Loaded (MT)', 
+                        data: rawData.map(i => parseNum(i.cargo_loaded)), 
+                        backgroundColor: '#10b981' 
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
 
-        function saveShipment(e) {
+            // 2. Grafik COA + Garis Spesifikasi Kontrak
+            const ctx2 = document.getElementById('coaChart').getContext('2d');
+            if (coaChart) coaChart.destroy();
+
+            // Membangun array batas spesifikasi (sepanjang data)
+            const count = rawData.length;
+            const targetAl2o3 = Array(count).fill(46);
+            const targetSio2 = Array(count).fill(15);
+            const targetRsio2 = Array(count).fill(5);
+
+            coaChart = new Chart(ctx2, {
+                data: {
+                    labels: rawData.map(i => `#${i.no_shipment}`),
+                    datasets: [
+                        { type: 'bar', label: 'Barging Al₂O₃', data: rawData.map(i => parseNum(i.coa_barging_al2o3)), backgroundColor: '#2563eb' },
+                        { type: 'bar', label: 'Discharge Al₂O₃', data: rawData.map(i => parseNum(i.coa_discharge_al2o3)), backgroundColor: '#60a5fa' },
+                        
+                        { type: 'bar', label: 'Barging SiO₂', data: rawData.map(i => parseNum(i.coa_barging_sio2)), backgroundColor: '#d97706' },
+                        { type: 'bar', label: 'Discharge SiO₂', data: rawData.map(i => parseNum(i.coa_discharge_sio2)), backgroundColor: '#fbbf24' },
+                        
+                        { type: 'bar', label: 'Barging R-SiO₂', data: rawData.map(i => parseNum(i.coa_barging_rsio2)), backgroundColor: '#7c3aed' },
+                        { type: 'bar', label: 'Discharge R-SiO₂', data: rawData.map(i => parseNum(i.coa_discharge_rsio2)), backgroundColor: '#c084fc' },
+                        
+                        // Garis Indikator Batas Spec
+                        { type: 'line', label: 'Min Al₂O₃ (46%)', data: targetAl2o3, borderColor: '#ef4444', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 0 },
+                        { type: 'line', label: 'Max SiO₂ (15%)', data: targetSio2, borderColor: '#f97316', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 0 },
+                        { type: 'line', label: 'Max R-SiO₂ (5%)', data: targetRsio2, borderColor: '#d946ef', borderWidth: 2, borderDash: [5, 5], fill: false, pointRadius: 0 }
+                    ]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { boxWidth: 12 } } },
+                    scales: { y: { beginAtZero: true, max: 60, title: { display: true, text: 'Kadar (%)' } } }
+                }
+            });
+        }
+
+        // Manajemen Modal UI
+        function openModal() { 
+            document.getElementById('dataForm').reset();
+            document.getElementById('shipmentModal').classList.remove('hidden'); 
+            document.getElementById('shipmentModal').classList.add('flex'); 
+        }
+        function closeModal() { 
+            document.getElementById('shipmentModal').classList.add('hidden'); 
+            document.getElementById('shipmentModal').classList.remove('flex'); 
+        }
+
+        // POST Data ke Sheet via GAS
+        async function saveShipment(e) {
             e.preventDefault();
-            const item = {
-                no_shipment: parseNum(document.getElementById('no_shipment').value),
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Mengirim...';
+            btn.disabled = true;
+
+            const payload = {
+                no_shipment: document.getElementById('no_shipment').value,
                 nama_tb_tongkang: document.getElementById('nama_tb_tongkang').value,
-                coa_barging_al2o3: parseNum(document.getElementById('coa_barging_al2o3').value),
-                coa_barging_sio2: parseNum(document.getElementById('coa_barging_sio2').value),
-                coa_barging_rsio2: parseNum(document.getElementById('coa_barging_rsio2').value),
-                coa_discharge_al2o3: parseNum(document.getElementById('coa_discharge_al2o3').value),
-                coa_discharge_sio2: parseNum(document.getElementById('coa_discharge_sio2').value),
-                coa_discharge_rsio2: parseNum(document.getElementById('coa_discharge_rsio2').value)
+                tambat_tali: document.getElementById('tambat_tali').value,
+                net_displacement_initial: document.getElementById('net_initial').value,
+                net_displacement_final: document.getElementById('net_final').value,
+                ritase_dt: document.getElementById('ritase_dt').value,
+                
+                coa_barging_al2o3: document.getElementById('coa_b_al').value,
+                coa_barging_sio2: document.getElementById('coa_b_si').value,
+                coa_barging_rsio2: document.getElementById('coa_b_rsi').value,
+                
+                coa_discharge_al2o3: document.getElementById('coa_d_al').value,
+                coa_discharge_sio2: document.getElementById('coa_d_si').value,
+                coa_discharge_rsio2: document.getElementById('coa_d_rsi').value,
+                
+                lepas_tali: document.getElementById('lepas_tali').value,
+                keberangkatan: document.getElementById('keberangkatan').value,
+                tujuan: document.getElementById('tujuan').value
             };
-            bargingData.push(item);
-            sendToGoogleSheet(item);
-            renderTable();
-            closeModal();
+
+            try {
+                await fetch(DEFAULT_GAS_URL, {
+                    method: "POST", mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                
+                // Segarkan data dari sheet
+                await fetchFromGAS(); 
+                closeModal();
+            } catch (err) {
+                alert("Terjadi kesalahan koneksi saat mengirim data.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
 
-        window.onload = function() { fetchFromGAS(); };
+        // Export data tabel ke Excel .xlsx
+        function exportExcel() {
+            const ws = XLSX.utils.json_to_sheet(rawData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Barging");
+            XLSX.writeFile(wb, "Data_Barging_SKU.xlsx");
+        }
+
+        // Screenshot aplikasi menjadi Gambar .png
+        function saveAsImage() {
+            html2canvas(document.getElementById('capture-area')).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Dashboard_Barging_SKU.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        // Saat halaman pertama dibuka, langsung muat data
+        window.onload = fetchFromGAS;
     </script>
 </body>
 </html>
+
+```
